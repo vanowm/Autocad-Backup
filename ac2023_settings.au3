@@ -37,14 +37,18 @@ Global $registry[3][2] = [ _
 
 Global $title = "AutoCAD 2023 Settings Backup"
 Global Const $VERSION = "1.0.0.7"
-Global $minWidth = 350
-Global $minHeight = 180
-Global $width = _iniRead("w", $minWidth - 14)
-Global $height = _iniRead("h", $minHeight - 14)
+Global $minWidth = 400
+Global $minHeight = 184
+Global $widthHeightOffset = 14
+Global $width = _iniRead("w", $minWidth - $widthHeightOffset)
+Global $height = _iniRead("h", $minHeight - $widthHeightOffset)
+if $height < $minHeight - $widthHeightOffset then $height = $minHeight - $widthHeightOffset
+if $width < $minWidth - $widthHeightOffset then $width = $minWidth - $widthHeightOffset
 Global $left = _iniRead("x", -1)
 Global $top = _iniRead("y", -1)
 Global $aWin[5] = [$width, $height, $left, $top]
 Global $filePrefix = 'acad2023_settings'
+Global $filePrefixExtra = filter(@ComputerName & "_" & @UserName & "_")
 Global $sDir = @ScriptDir & '\settings\'
 Global $sAppData = StringReplace(_PathFull(@ScriptDir & "..\C\"), "\", "\\")
 Global $UserProfileDir = StringReplace(@UserProfileDir, "\", "\\")
@@ -60,18 +64,20 @@ startup()
 #Region ### START Koda GUI section ### Form=E:\dev\Apps\Autocad Backup\ac2023_settings.kxf
 Global $hGUI = GUICreate($title & " v" & $version, $width, $height, $left, $top, BitOR($WS_SIZEBOX, $WS_THICKFRAME, $WS_SYSMENU, $DS_MODALFRAME))
 GUISetFont(10, 400, 0, "Segoe UI")
-Global $gList = GUICtrlCreateList("", 6, 0, $width - 14, $height - 62, BitOR($WS_BORDER, $WS_VSCROLL, $LBS_EXTENDEDSEL), 0)
+local $iListHeight = $height - 62
+local $iButtonY = $iListHeight + 6
+Global $gList = GUICtrlCreateList("", 6, 6, $width - 14, $iListHeight, BitOR($WS_BORDER, $WS_VSCROLL, $LBS_EXTENDEDSEL), 0)
 GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKRIGHT + $GUI_DOCKTOP + $GUI_DOCKBOTTOM)
 Global $hList = GUICtrlGetHandle($gList)
-Global $gBackup = GUICtrlCreateButton("&Backup", 6, $height - 56, 75, 25, $BS_NOTIFY)
+Global $gBackup = GUICtrlCreateButton("&Backup", 6, $iButtonY, 75, 25, $BS_NOTIFY)
 GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKBOTTOM + $GUI_DOCKWIDTH + $GUI_DOCKHEIGHT)
-Global $gRestore = GUICtrlCreateButton("&Restore", 86, $height - 56, 75, 25, $BS_NOTIFY)
+Global $gRestore = GUICtrlCreateButton("&Restore", 86, $iButtonY, 75, 25, $BS_NOTIFY)
 GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKBOTTOM + $GUI_DOCKWIDTH + $GUI_DOCKHEIGHT)
-Global $gDelete = GUICtrlCreateButton("&Delete", 166, $height - 56, 75, 25, $BS_NOTIFY)
+Global $gDelete = GUICtrlCreateButton("&Delete", 166, $iButtonY, 75, 25, $BS_NOTIFY)
 GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKBOTTOM + $GUI_DOCKWIDTH + $GUI_DOCKHEIGHT)
-Global $gStatus = GUICtrlCreateLabel("", 246, $height - 52, $width - 87 - 246, 18, $DT_PATH_ELLIPSIS)
+Global $gStatus = GUICtrlCreateLabel("", 246, $iButtonY + 3, $width - 87 - 246, 18, $DT_PATH_ELLIPSIS)
 GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKBOTTOM + $GUI_DOCKRIGHT + $GUI_DOCKHEIGHT)
-Global $gExit = GUICtrlCreateButton("&Exit", $width - 82, $height - 56, 75, 25, $BS_NOTIFY)
+Global $gExit = GUICtrlCreateButton("&Exit", $width - 82, $iButtonY, 75, 25, $BS_NOTIFY)
 GUICtrlSetResizing(-1, $GUI_DOCKRIGHT + $GUI_DOCKBOTTOM + $GUI_DOCKWIDTH + $GUI_DOCKHEIGHT)
 
 Global $gListContext = GUICtrlCreateContextMenu($gList)
@@ -136,6 +142,10 @@ Func _Resized() ; срабатывает один раз при изменени
 ;~ $aWin[3] = $aWinPos[1]
 ;~ debug("_Resized", $aWin)
 EndFunc   ;==>_Resized
+
+Func filter($txt)
+	return StringRegExpReplace($txt, "(?i)[^a-z0-9\-_]", "_")
+EndFunc
 
 Func _WM_COMMAND($hWnd, $Msg, $wParam, $lParam)
 
@@ -257,7 +267,7 @@ EndFunc   ;==>fixPath
 
 Func getList()
     Local $sList = ""
-    Local $PID = Run(@ComSpec & ' /c DIR "' & $sDir & '" /B /A-D /O-D | findstr /m /i "^' & $filePrefix & '_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9].*\.reg$" ', "", @SW_HIDE, 2) ; /O-D = newest first, 2 = $STDOUT_CHILD
+    Local $PID = Run(@ComSpec & ' /c DIR "' & $sDir & '" /B /A-D /O-D | findstr /m /i "^' & $filePrefix & '.*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9].*\.reg$" ', "", @SW_HIDE, 2) ; /O-D = newest first, 2 = $STDOUT_CHILD
     While Not @error
         $sList &= StdoutRead($PID)
     WEnd
@@ -286,7 +296,7 @@ EndFunc   ;==>initIni
 
 Func settingsBackup($file = Null)
 ;~ Func settingsBackup($file = $filePrefix & '.reg')
-    If Not $file Then $file = 'acad2023_settings_' & @YEAR & @MON & @MDAY & '_' & @HOUR & @MIN & @SEC & '.reg'
+    If Not $file Then $file = $filePrefix & "_" & $filePrefixExtra & @YEAR & @MON & @MDAY & '_' & @HOUR & @MIN & @SEC & '.reg'
     If Not FileExists($sDir) Then DirCreate($sDir)
     $file = $sDir & $file
     Local $return = ""
@@ -415,8 +425,9 @@ Func showList($sList = null, $sSelect = Null)
     Global $mList[]
     Local $sListDisplay = ""
     For $i = 1 To $aList[0]
-        Local $name = StringRegExpReplace($aList[$i], "^" & $filePrefix & "_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(.*)\.reg", "$1-$2-$3 $4:$5:$6$7")
-        $sListDisplay &= @CR & $name
+        Local $name = StringRegExpReplace($aList[$i], "^" & $filePrefix & "(?:_(\w*)_(\w*))?_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(.*)\.reg", "$3-$4-$5 $6:$7:$8$9 ($2@$1)")
+        $name = StringReplace($name, " (@)", "")
+		$sListDisplay &= @CR & $name
         $mList[$name] = $aList[$i]
     Next
     debug($sListDisplay)
@@ -429,6 +440,7 @@ EndFunc   ;==>showList
 
 func runCMD($cmd, $isAdmin = false)
     local $iPID
+debug($cmd)
     if $isAdmin Then
         $iPID = Run($cmd, "", @SW_HIDE, $STDERR_MERGED)
     else
