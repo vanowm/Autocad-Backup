@@ -4,7 +4,7 @@
 #AutoIt3Wrapper_Compression=4
 #AutoIt3Wrapper_UseUpx=y
 #AutoIt3Wrapper_Res_Description=AutoCAD 2023 Settings Backup/Restore
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.1
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.7
 #AutoIt3Wrapper_Res_Fileversion_AutoIncrement=y
 #AutoIt3Wrapper_Res_ProductName=AutoCAD 2023 Settings Backup
 #AutoIt3Wrapper_Res_ProductVersion=1.0.0.0
@@ -36,7 +36,7 @@ Global $registry[3][2] = [ _
         ["HKEY_CURRENT_USER\SOFTWARE\AppDataLow\Software\Autodesk\AutoCAD\R24.2", "CUL"]]
 
 Global $title = "AutoCAD 2023 Settings Backup"
-Global $version = "1.0.0"
+Global Const $VERSION = "1.0.0.7"
 Global $minWidth = 350
 Global $minHeight = 180
 Global $width = _iniRead("w", $minWidth - 14)
