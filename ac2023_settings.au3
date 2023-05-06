@@ -297,6 +297,7 @@ EndFunc   ;==>initIni
 Func settingsBackup($file = Null)
 ;~ Func settingsBackup($file = $filePrefix & '.reg')
     If Not $file Then $file = $filePrefix & "_" & $filePrefixExtra & @YEAR & @MON & @MDAY & '_' & @HOUR & @MIN & @SEC & '.reg'
+	$file = $filePrefix & "_" & $filePrefixExtra & "00000000_000000.reg"
     If Not FileExists($sDir) Then DirCreate($sDir)
     $file = $sDir & $file
     Local $return = ""
@@ -425,7 +426,7 @@ Func showList($sList = null, $sSelect = Null)
     Global $mList[]
     Local $sListDisplay = ""
     For $i = 1 To $aList[0]
-        Local $name = StringRegExpReplace($aList[$i], "^" & $filePrefix & "(?:_(\w*)_(\w*))?_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(.*)\.reg", "$3-$4-$5 $6:$7:$8$9 ($2@$1)")
+        Local $name = StringRegExpReplace($aList[$i], "^" & $filePrefix & "_(?:([a-zA-Z0-9'.\-_!#^~]*)_([a-zA-Z0-9\-]*)_)?(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(.*)\.reg", "$3-$4-$5 $6:$7:$8$9 ($2@$1)")
         $name = StringReplace($name, " (@)", "")
 		$sListDisplay &= @CR & $name
         $mList[$name] = $aList[$i]
